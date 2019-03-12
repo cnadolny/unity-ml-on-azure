@@ -139,13 +139,13 @@ $aksExists = az aks list -g $resourceGroupName
 $aksClusterName = "ml-unity-aks"
 
 if ($aksExists.Count -le 1){
-    Write-Information "AKS Cluster does not exist, creating a cluster named $aksClusterName in $resourceGroupName"
+    # Write-Information "AKS Cluster does not exist, creating a cluster named $aksClusterName in $resourceGroupName"
 
-    az aks create --resource-group $resourceGroupName --name $aksClusterName --node-vm-size Standard_NC6 --node-count 1 --kubernetes-version 1.11.8
-    az aks get-credentials -n $aksClusterName -g $resourceGroupName
+    # az aks create --resource-group $resourceGroupName --name $aksClusterName --node-vm-size Standard_NC6 --node-count 1 --kubernetes-version 1.11.8
+    # az aks get-credentials -n $aksClusterName -g $resourceGroupName
 
-    kubectl create namespace gpu-resources
-    kubectl apply -f nvidia-device-plugin-ds.yaml
+    # kubectl create namespace gpu-resources
+    # kubectl apply -f nvidia-device-plugin-ds.yaml
 
     "
     apiVersion: v1
@@ -168,6 +168,7 @@ Write-Information $environmentName
 Write-Information "Creating batch job in AKS"
 
 # $environmentShortName = $environmentName.split('.')[0]
+# $randomNumber = Get-Random
 
 '
 apiVersion: batch/v1
@@ -200,10 +201,12 @@ spec:
       volumes:
       - name: azurefileshare
         azureFile:
-          secretName: volume-azurefile-storage-secret3
+          secretName: storage-account
           shareName: unityml
           readOnly: false
 ' | kubectl create -f -
+
+# kubectl wait --for=condition=complete job/myjob
 
 Write-Information "Batch job completed. Downloading models and summaries from run."
 
