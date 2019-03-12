@@ -35,3 +35,9 @@ Resources for running Unity ML agent training in Azure
 - Uploads your Unity build to the file share
 - Creates an Azure Container Instance to run the ML training using said Unity build, outputting to said file share
 - For parameters, see comment based help in [train-on-aci.sh](./scripts/train-on-aci.sh)
+
+## GPU AKS Information
+
+### Prerequisites
+`scripts/train-on-aks.ps1` will do the following:
+- Ensures

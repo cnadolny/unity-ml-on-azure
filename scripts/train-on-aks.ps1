@@ -30,7 +30,7 @@
   The Docker container image which contains the python resources to run the training. Defaults to druttka/unity-ml-trainer:latest. To build your own container, see https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md
    
   .EXAMPLE
-  .\train-on-aci.ps1 -storageAccountName "drunityml20180425"
+  .\train-on-aks.ps1 -storageAccountName "drunityml20180425"
 
   .LINK
   https://github.com/druttka/unity-ml-on-azure
@@ -171,7 +171,7 @@ kind: Job
 metadata:
   labels:
     app: ml-gpu
-  name: ml-gpu-$runId
+  name: 'ml-gpu-$runId'
 spec:
   template:
     metadata:
