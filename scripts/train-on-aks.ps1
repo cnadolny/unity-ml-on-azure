@@ -54,7 +54,7 @@ param(
   [Parameter(Mandatory=$false)]
   [string]$storageShareName="unityml",
   [Parameter(Mandatory=$false)]
-  [string]$containerImage="druttka/unity-ml-trainer:latest"
+  [string]$containerImage="cnadolny/ml-agents-gpu"
 )
 
 if (!$PSBoundParameters.ContainsKey('ErrorAction'))
@@ -139,13 +139,13 @@ $aksExists = az aks list -g $resourceGroupName
 $aksClusterName = "ml-unity-aks"
 
 if ($aksExists.Count -le 1){
-    # Write-Information "AKS Cluster does not exist, creating a cluster named $aksClusterName in $resourceGroupName"
+    Write-Information "AKS Cluster does not exist, creating a cluster named $aksClusterName in $resourceGroupName"
 
-    # az aks create --resource-group $resourceGroupName --name $aksClusterName --node-vm-size Standard_NC6 --node-count 1 --kubernetes-version 1.11.8
-    # az aks get-credentials -n $aksClusterName -g $resourceGroupName
+    az aks create --resource-group $resourceGroupName --name $aksClusterName --node-vm-size Standard_NC6 --node-count 1 --kubernetes-version 1.11.8
+    az aks get-credentials -n $aksClusterName -g $resourceGroupName
 
-    # kubectl create namespace gpu-resources
-    # kubectl apply -f nvidia-device-plugin-ds.yaml
+    kubectl create namespace gpu-resources
+    kubectl apply -f nvidia-device-plugin-ds.yaml
 
     "
     apiVersion: v1
@@ -163,20 +163,15 @@ else {
     az aks get-credentials -n $aksClusterName -g $resourceGroupName
 }
 
-Write-Information $environmentName
-
 Write-Information "Creating batch job in AKS"
 
-# $environmentShortName = $environmentName.split('.')[0]
-# $randomNumber = Get-Random
-
-'
+"
 apiVersion: batch/v1
 kind: Job
 metadata:
   labels:
     app: ml-gpu
-  generateName: ml-gpu-
+  name: ml-gpu-$runId
 spec:
   template:
     metadata:
@@ -185,8 +180,8 @@ spec:
     spec:
       containers:
       - name: ml-gpu
-        image: cnadolny/ml-agents-gpu
-        args: ["--env=/unity-volume/3DBall-Linux", "--train", "--run-id=test", "/unity-volume/trainer_config.yaml"]
+        image: '$containerImage'
+        args: ['--env=/unity-volume/$environmentName', '--train', '--run-id=$runId', '/unity-volume/trainer_config.yaml']
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: azurefileshare
@@ -204,9 +199,9 @@ spec:
           secretName: storage-account
           shareName: unityml
           readOnly: false
-' | kubectl create -f -
+" | kubectl create -f -
 
-# kubectl wait --for=condition=complete job/myjob
+kubectl wait --for=condition=complete "job/ml-gpu-$runId"
 
 Write-Information "Batch job completed. Downloading models and summaries from run."
 
