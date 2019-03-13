@@ -143,10 +143,10 @@ if ($aksExists.Count -le 1){
 
     $outVars = (az ad sp create-for-rbac --skip-assignment) | ConvertFrom-Json
     az aks create --resource-group $resourceGroupName --name $aksClusterName --node-vm-size Standard_NC6 --node-count 1 --kubernetes-version 1.11.8 --generate-ssh-keys --service-principal $outVars.appId --client-secret $outVars.password
-    az aks get-credentials -n $aksClusterName -g $resourceGroupName
+    az aks get-credentials -n $aksClusterName -g $resourceGroupName --overwrite-existing
 
     kubectl create namespace gpu-resources
-    kubectl apply -f nvidia-device-plugin-ds.yaml
+    kubectl apply -f scripts\nvidia-device-plugin-ds.yaml
 
     "
     apiVersion: v1
@@ -161,7 +161,7 @@ if ($aksExists.Count -le 1){
 }
 else {
     Write-Information "AKS Cluster exists, obtaining credentials."
-    az aks get-credentials -n $aksClusterName -g $resourceGroupName
+    az aks get-credentials -n $aksClusterName -g $resourceGroupName --overwrite-existing
 }
 
 Write-Information "Creating batch job in AKS"
