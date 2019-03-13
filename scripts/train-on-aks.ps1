@@ -119,21 +119,16 @@ elseif (![string]::IsNullOrWhiteSpace($environmentName))
 Write-Information "Using $environmentName, in $localVolume."
 
 $groupExists = az group exists -n $resourceGroupName
-$storageAccountKey = ""
 
-if ($groupExists -eq "true"){
-    $keys = (az storage account keys list --resource-group $resourceGroupName --account-name $storageAccountName --query "[].value" -o tsv)
-    $storageAccountKey = $keys[0]
-    az storage file upload --share-name $storageShareName --account-key $storageAccountKey --account-name $storageAccountName --source "$localVolume/trainer_config.yaml"
-}
-else{
+if ($groupExists -eq "false"){
     az group create --name $resourceGroupName --location $location
     az storage account create --resource-group $resourceGroupName --name $storageAccountName --location $location --sku Standard_LRS --kind Storage
-    $keys = (az storage  account keys list --resource-group $resourceGroupName --account-name $storageAccountName --query "[].value" -o tsv)
-    $storageAccountKey = $keys[0]
-    az storage share create --name $storageShareName --quota 2048 --account-name $storageAccountName --account-key $storageAccountKey
-    az storage file upload-batch --account-name $storageAccountName --account-key $storageAccountKey --destination $storageShareName --source $localVolume
 }
+
+$keys = (az storage account keys list --resource-group $resourceGroupName --account-name $storageAccountName --query "[].value" -o tsv)
+$storageAccountKey = $keys[0]
+az storage share create --name $runId --quota 2048 --account-name $storageAccountName --account-key $storageAccountKey
+az storage file upload-batch --account-name $storageAccountName --account-key $storageAccountKey --destination $runId --source "$localVolume"
 
 $aksExists = az aks list -g $resourceGroupName
 $aksClusterName = "ml-unity-aks"
@@ -198,9 +193,11 @@ spec:
       - name: azurefileshare
         azureFile:
           secretName: storage-account
-          shareName: unityml
+          shareName: '$runId'
           readOnly: false
 " | kubectl create -f -
+
+# TODO: Grab output of container logs and paste them in the terminal so user can see progress.
 
 do {
     Write-Information "Waiting for job to finish."
@@ -218,5 +215,7 @@ if (!(Test-Path "$localVolume\summaries")){
     New-Item "$localVolume\summaries" -itemtype directory
 }
 
-az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\models" --source "$storageShareName/models"
-az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\summaries" --source "$storageShareName/summaries"
+# TODO: do a check to make sure we wait for the files to be uploaded prior to downloading.
+
+az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\models" --source "$runId/models"
+az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\summaries" --source "$runId/summaries"
