@@ -141,7 +141,8 @@ $aksClusterName = "ml-unity-aks"
 if ($aksExists.Count -le 1){
     Write-Information "AKS Cluster does not exist, creating a cluster named $aksClusterName in $resourceGroupName"
 
-    az aks create --resource-group $resourceGroupName --name $aksClusterName --node-vm-size Standard_NC6 --node-count 1 --kubernetes-version 1.11.8
+    $outVars = (az ad sp create-for-rbac --skip-assignment) | ConvertFrom-Json
+    az aks create --resource-group $resourceGroupName --name $aksClusterName --node-vm-size Standard_NC6 --node-count 1 --kubernetes-version 1.11.8 --generate-ssh-keys --service-principal $outVars.appId --client-secret $outVars.password
     az aks get-credentials -n $aksClusterName -g $resourceGroupName
 
     kubectl create namespace gpu-resources
@@ -201,7 +202,10 @@ spec:
           readOnly: false
 " | kubectl create -f -
 
-kubectl wait --for=condition=complete "job/ml-gpu-$runId"
+do {
+    Write-Information "Waiting for job to finish."
+    Start-Sleep -s 60
+} until ((kubectl get jobs "ml-gpu-$runId" -o jsonpath="{.status.conditions[?(@.type=='Complete')].status}") -eq "True")
 
 Write-Information "Batch job completed. Downloading models and summaries from run."
 
