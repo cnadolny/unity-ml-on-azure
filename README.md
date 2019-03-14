@@ -38,8 +38,8 @@ The following instructions guide you through the steps to create a Unity ML Agen
 1. Make sure you have all the **Prerequisites** listed above and that you've completed the steps listed in **Before you Begin** once on your machine.
 1. Copy `Editor/AzureDeploymentWindow-AKS.cs` from this repo into your project's Editor directory.1. Build your Unity project for Linux x86_64 as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md)
 1. From the Unity editor main menu, select the `ML on Azure > Train` command to open the popup dialog of the same name.
-1. Optionally set the **Storage Account Name** where build files will be uploaded in Azure; a default name is provided based on the current time, but is not guaranteed to be unique.
-1. Optionally set the **Job Name** (known as the Run ID in ML Agents); a default name is provided but if you're planning on running multiple jobs in parallel, each job should have a unique name to differentiate it from the other jobs.
+1. Optionally set the **Storage Account Name** where build files will be uploaded in Azure; a default name is provided based on the current time, but is not guaranteed to be unique. *Letters must be lowercase*.
+1. Optionally set the **Job Name** (known as the Run ID in ML Agents); a default name is provided but if you're planning on running multiple jobs in parallel, each job should have a unique name to differentiate it from the other jobs. *Letters must be lowercase*.
 1. Click `Choose build output` and navigate to your x86_64 build output.
 1. Click the `Generate Deployment Command` button; currently the editor only displays what you should run at the command line. Select the full command and copy it to the clipboard.
 1. Open a console window and ensure you are logged into Azure (run `az login`)
@@ -50,6 +50,12 @@ The following instructions guide you through the steps to create a Unity ML Agen
 ![Train ML on Azure Screenshot](Screenshots/MLonAzureTrainingDialog.PNG)
 
 Training will take a while but you're free to continue doing other work on your local machine, including starting another ML training job in Azure. Once the job has compldeted, the results will be downloaded automatically to the `/models` subfolder where your Linux build binaries are located.
+
+## Monitoring Your AKS Jobs
+
+If you want to monitor the status of your jobs on Kubernetes, use one of the following console commands:
+- Check the overall status of all AKS jobs with `kubectl get jobs`
+- To check the output of a specific job deployed in a container, start with `kubectl get pods`. This will return the current jobs running on a pod. Copy that pod name, and you can view the logs from that pod with the command below: `kubectl logs <podid>`
 
 ## Details
 
@@ -68,3 +74,11 @@ Training will take a while but you're free to continue doing other work on your 
 - Uploads your Unity build to the file share
 - Creates an Azure Kubernetes Service (AKS) job to run the ML training using said Unity build, outputting to said file share
 - For parameters, see comment based help in [train-on-aks.sh](./scripts/train-on-aks.sh)
+
+## Azure Resources & Clean-up
+At this time there is no clean-up of assets created in Azure included with these scripts. This section provides an outline of these Azure assets and services to facilitate manual cleanup from within the [Azure Portal](https://portal.azure.com).
+
+1. All the assets and services created by the script are located in two resource groups: `unityml` and `MC_unityml_ml-unity-aks_westus2`.
+1. The `unityml` resource group contains the storage account you have specified in the Unity editor. Using the Storage Explorer, you can see file share containers in this storage account. These contain all the Linux build files that were uploaded for training. Once you've received the brain files resulting from the training, you can delete these files.
+1. The `unityml` resource group also contains the Kubernetes service named `Kubernetes service`. AKS does not incur any extra cost in Azure since [AKS cluster management](https://azure.microsoft.com/pricing/details/kubernetes-service/) is free. You only pay for the virtual machines instances, storage and networking resources consumed by your Kubernetes cluster.
+1. The resource group `MC_unityml_ml-unity-aks_westus2` contains the Virtual Machine (VM) used by the container service, including its associated disk and related networking services and assets. 
