@@ -118,13 +118,8 @@ elseif (![string]::IsNullOrWhiteSpace($environmentName))
 
 Write-Information "Using $environmentName, in $localVolume."
 
-$groupExists = az group exists -n $resourceGroupName
-
-if ($groupExists -eq "false"){
-    az group create --name $resourceGroupName --location $location
-    az storage account create --resource-group $resourceGroupName --name $storageAccountName --location $location --sku Standard_LRS --kind Storage
-}
-
+az group create --name $resourceGroupName --location $location
+az storage account create --resource-group $resourceGroupName --name $storageAccountName --location $location --sku Standard_LRS --kind Storage
 $keys = (az storage account keys list --resource-group $resourceGroupName --account-name $storageAccountName --query "[].value" -o tsv)
 $storageAccountKey = $keys[0]
 az storage share create --name $runId --quota 2048 --account-name $storageAccountName --account-key $storageAccountKey
@@ -161,6 +156,12 @@ else {
 
 Write-Information "Creating batch job in AKS"
 
+# Fix hard coded unity-volume
+$temp = $localVolume.Split('\')
+$folderName = $temp[$temp.Length - 1] 
+
+Write-Information $folderName
+
 "
 apiVersion: batch/v1
 kind: Job
@@ -177,11 +178,11 @@ spec:
       containers:
       - name: ml-gpu
         image: '$containerImage'
-        args: ['--env=/unity-volume/$environmentName', '--train', '--run-id=$runId', '/unity-volume/trainer_config.yaml']
+        args: ['--env=/$folderName/$environmentName', '--train', '--run-id=$runId', '/$folderName/trainer_config.yaml']
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: azurefileshare
-          mountPath: /unity-volume
+          mountPath: '/$folderName'
         ports:
         - containerPort: 5005
           name: ml-agents
