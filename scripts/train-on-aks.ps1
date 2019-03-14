@@ -156,7 +156,6 @@ else {
 
 Write-Information "Creating batch job in AKS"
 
-# Fix hard coded unity-volume
 $temp = $localVolume.Split('\')
 $folderName = $temp[$temp.Length - 1] 
 
@@ -173,7 +172,7 @@ spec:
   template:
     metadata:
       labels:
-        app: ml-gpu
+        app: 'ml-gpu-$runId'
     spec:
       containers:
       - name: ml-gpu
@@ -198,12 +197,14 @@ spec:
           readOnly: false
 " | kubectl create -f -
 
-# TODO: Grab output of container logs and paste them in the terminal so user can see progress.
+$podName = kubectl get pod -l app="ml-gpu-$runId" -o jsonpath="{.items[0].metadata.name}"
 
 do {
-    Write-Information "Waiting for job to finish."
-    Start-Sleep -s 60
-} until ((kubectl get jobs "ml-gpu-$runId" -o jsonpath="{.status.conditions[?(@.type=='Complete')].status}") -eq "True")
+    Write-Information "Waiting for pod to start."
+    Start-Sleep -s 30
+} until ((kubectl get po $podName -o jsonpath="{.status.containerStatuses[?(@.name=='ml-gpu')].ready}") -eq "true")
+
+kubectl logs -f $podName
 
 Write-Information "Batch job completed. Downloading models and summaries from run."
 
