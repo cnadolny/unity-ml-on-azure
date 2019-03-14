@@ -47,7 +47,7 @@ The following instructions guide you through the steps to create a Unity ML Agen
 ~~~
 .\scripts\train-on-aks.ps1 -storageAccountName drunityml20180425 -environmentName 3dball -localVolume C:\code\ml-agents\unity-volume -runid run-a 
 ~~~
-![Train ML on Azure Screenshot](./Screenshots/MLonAzureTrainingDialog.png)
+![Train ML on Azure Screenshot](Screenshots/MLonAzureTrainingDialog.png)
 
 Training will take a while but you're free to continue doing other work on your local machine, including starting another ML training job in Azure. Once the job has compldeted, the results will be downloaded automatically to the `/models` subfolder where your Linux build binaries are located.
 
