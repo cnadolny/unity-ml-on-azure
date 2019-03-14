@@ -36,35 +36,35 @@ Running your Machine Learning (ML) training in the cloud offers several benefits
 ## Quickstart
 The following instructions guide you through the steps to create a Unity ML Agents training job in an Azure container using AKS:
 1. Make sure you have all the **Prerequisites** listed above and that you've completed the steps listed in **Before you Begin** once on your machine.
-1. Build your Unity project for Linux x86_64 as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md)
-1. Copy `Editor/AzureDeploymentWindow.cs` into your project's Editor directory.
-1. Use the `ML on Azure > Train` command to open the dialog
-1. Optionally set the storage account name; a default name is provided based on the current time, but is not guaranteed to be unique
+1. Copy `Editor/AzureDeploymentWindow.cs` from this repo into your project's Editor directory.1. Build your Unity project for Linux x86_64 as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md)
+1. From the Unity editor main menu, select the `ML on Azure > Train` command to open the popup dialog of the same name.
+1. Optionally set the **Storage Account Name** where build files will be uploaded in Azure; a default name is provided based on the current time, but is not guaranteed to be unique.
+1. Optionally set the **Job Name** (known as the Run ID in ML Agents); a default name is provided but if you're planning on running multiple jobs in parallel, each job should have a unique name to differentiate it from the other jobs.
 1. Click `Choose build output` and navigate to your x86_64 build output.
-1. Click `Deploy`; currently the editor only displays what you should run at the command line
-1. Ensure you are logged into Azure (run `az login`)
-1. Navigate to the `scripts` and run the command provided by the editor, e.g., `.\train-on-aci.ps1 -storageAccountName drunityml20180425 -environmentName 3dball -localVolume C:\code\ml-agents\unity-volume` 
+1. Click the `Generate Deployment Command` button; currently the editor only displays what you should run at the command line. Select the full command and copy it to the clipboard.
+1. Open a console window and ensure you are logged into Azure (run `az login`)
+1. Navigate to the root of the folder where you cloned this repo and run the command provided by the editor. Use the **ps1** command extension if you're using PowerShell or *sh** extension if you're using Bash. For example: 
+~~~
+.\scripts\train-on-aks.ps1 -storageAccountName drunityml20180425 -environmentName 3dball -localVolume C:\code\ml-agents\unity-volume -runid run-a 
+~~~
+![Train ML on Azure Screenshot](./Screenshots/MLonAzureTrainingDialog.png)
+
+Training will take a while but you're free to continue doing other work on your local machine, including starting another ML training job in Azure. Once the job has compldeted, the results will be downloaded automatically to the `/models` subfolder where your Linux build binaries are located.
 
 ## Details
 
 ### PowerShell Script
-`scripts/train-on-aci.ps1` will do the following:
+`scripts/train-on-aks.ps1` will do the following:
 - Ensures the existence of a target Azure resource group
 - Ensures the existence of a target Azure storage account and file share
 - Uploads your Unity build to the file share
-- Creates an Azure Container Instance to run the ML training using said Unity build, outputting to said file share
-- For parameters, see comment based help in [train-on-aci.ps1](./scripts/train-on-aci.ps1)
+- Creates an Azure Kubernetes Service (AKS) job to run the ML training using said Unity build, outputting to said file share
+- For parameters, see comment based help in [train-on-aks.ps1](./scripts/train-on-aks.ps1)
 
 ### Bash Script
-`scripts/train-on-aci.sh` will do the following:
+`scripts/train-on-aks.sh` will do the following:
 - Ensures the existence of a target Azure resource group
 - Ensures the existence of a target Azure storage account and file share
 - Uploads your Unity build to the file share
-- Creates an Azure Container Instance to run the ML training using said Unity build, outputting to said file share
-- For parameters, see comment based help in [train-on-aci.sh](./scripts/train-on-aci.sh)
-
-## GPU AKS Information
-
-### Prerequisites
-`scripts/train-on-aks.ps1` will do the following:
-- Ensures
+- Creates an Azure Kubernetes Service (AKS) job to run the ML training using said Unity build, outputting to said file share
+- For parameters, see comment based help in [train-on-aks.sh](./scripts/train-on-aks.sh)
