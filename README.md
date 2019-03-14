@@ -1,5 +1,5 @@
 # Unity ML Agents Training on Azure with Containers
-This project contains a collection of resources and instructions to guide developers & designers for offloading the training of Unity ML Agents to the cloud using Docker Containers, Kubernetes and Microsoft Azure.
+This project contains a collection of resources and instructions to guide developers & designers for offloading the training of Unity ML Agents to the cloud using Docker containers, [Kubernetes](https://docs.microsoft.com/en-us/azure/aks/) and Microsoft Azure.
 
 Running your Machine Learning (ML) training in the cloud offers several benefits:
 
@@ -10,14 +10,32 @@ Running your Machine Learning (ML) training in the cloud offers several benefits
 
 ## Prerequisites
 - Windows, Linux or macOS development computer.
-- **[Unity 3D editor](https://unity3d.com/get-unity)**: These resources were tested with the latest version of Unity 2018.3.
+- **[Unity 3D editor](https://unity3d.com/get-unity)**: These resources were tested with the latest version of Unity 2018.3. Select the **Linux Build Support** option when you install Unity.
 - **[Unity ML Agents](https://github.com/Unity-Technologies/ml-agents)**: This guide assumes that you are already familiar with Unity ML Agents. If not, follow the [Basic Guide](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Basic-Guide.md), which requires that you perform a [local installation](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Installation.md) of all the required resources (e.g. Python, Tensorflow, CUDA, etc.) This guide does NOT require any of these resources to be setup on your local computer other than the Unity editor itself, since all ML training is offloaded to cloud containers.
-- **Azure Account**: Sign-up today and get [free Azure credits](https://azure.microsoft.com/Credits/Free)!
+- **Azure Account**: Azure is Microsoft's Cloud. Sign-up today and get [free Azure credits](https://azure.microsoft.com/Credits/Free)!
 - **[Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)**: The command-line tools used in this guide.
-- **[PowerShell](https://github.com/powershell/powershell#get-powershell)** or **Bash**.
+- **[PowerShell](https://github.com/powershell/powershell#get-powershell)** or **Bash**: This guide will refer to this as the "console".
+
+## Before You Begin
+1. Make sure you have properly installed all the **Prerequisites** listed above and that you have an active [Azure account](https://azure.microsoft.com/Credits/Free).
+2. Open your console and make sure you are [logged in to your Azure account](https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli?view=azure-cli-latest) with the following (*you'll be redirected to a browser window to complete the login*):
+~~~
+    az login
+~~~
+3. If you have [more than one Azure subscription](https://docs.microsoft.com/en-us/cli/azure/manage-azure-subscriptions-azure-cli?view=azure-cli-latest), make sure to set the default subscription to the one to be used for ML training:
+~~~
+    az account list --output table
+    az account set --subscription "your-subscription-id"
+~~~
+4. Next, you need to install **Kubectl**, a command-line tool used to deploy and manage applications on Kubernetes, including [Azure Kubernetes Services](https://docs.microsoft.com/en-us/azure/aks/) (AKS) used here:
+~~~
+    az aks install-cli
+~~~
+5. Follow the instructions provided in the console to add **kubectl.exe** to your system PATH.
 
 ## Quickstart
-1. Get started with Unity 3D ML Agents as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Getting-Started-with-Balance-Ball.md)
+The following instructions guide you through the steps to create a Unity ML Agents training job in an Azure container using AKS:
+1. Make sure you have all the **Prerequisites** listed above and that you've completed the steps listed in **Before you Begin** once on your machine.
 1. Build your Unity project for Linux x86_64 as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md)
 1. Copy `Editor/AzureDeploymentWindow.cs` into your project's Editor directory.
 1. Use the `ML on Azure > Train` command to open the dialog
