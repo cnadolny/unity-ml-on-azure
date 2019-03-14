@@ -217,7 +217,11 @@ if (!(Test-Path "$localVolume\summaries")){
     New-Item "$localVolume\summaries" -itemtype directory
 }
 
-# TODO: do a check to make sure we wait for the files to be uploaded prior to downloading.
+do {
+    Start-Sleep -s 5
+} until ((kubectl get jobs "ml-gpu-$runId" -o jsonpath="{.status.conditions[?(@.type=='Complete')].status}") -eq "True")
+
+kubectl delete job "ml-gpu-$runId"
 
 az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\models" --source "$runId/models"
 az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\summaries" --source "$runId/summaries"
