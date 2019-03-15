@@ -29,6 +29,9 @@
   .PARAMETER containerImage
   The Docker container image which contains the python resources to run the training. Defaults to druttka/unity-ml-trainer:latest. To build your own container, see https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md
    
+  .PARAMETER trainerConfigPath
+  The path for the trainer_config.yaml if it is not found in the localVolume directory.
+   
   .EXAMPLE
   .\train-on-aks.ps1 -storageAccountName "drunityml20180425"
 
@@ -54,7 +57,9 @@ param(
   [Parameter(Mandatory=$false)]
   [string]$storageShareName="unityml",
   [Parameter(Mandatory=$false)]
-  [string]$containerImage="cnadolny/ml-agents-gpu"
+  [string]$containerImage="cnadolny/ml-agents-gpu",
+  [Parameter(Mandatory=$false)]
+  [string]$trainerConfigPath=""
 )
 
 if (!$PSBoundParameters.ContainsKey('ErrorAction'))
@@ -125,6 +130,11 @@ $storageAccountKey = $keys[0]
 az storage share create --name $runId --quota 2048 --account-name $storageAccountName --account-key $storageAccountKey
 az storage file upload-batch --account-name $storageAccountName --account-key $storageAccountKey --destination $runId --source "$localVolume"
 
+if (-not ([string]::IsNullorEmpty($trainerConfigPath)))
+{
+    az storage file upload --account-name $storageAccountName --account-key $storageAccountKey --share-name $runId --sourch $trainerConfigPath
+}
+
 $aksExists = az aks list -g $resourceGroupName
 $aksClusterName = "ml-unity-aks"
 
@@ -158,8 +168,6 @@ Write-Information "Creating batch job in AKS"
 
 $temp = $localVolume.Split('\')
 $folderName = $temp[$temp.Length - 1] 
-
-Write-Information $folderName
 
 "
 apiVersion: batch/v1
@@ -204,7 +212,7 @@ do {
     Start-Sleep -s 30
 } until ((kubectl get po $podName -o jsonpath="{.status.containerStatuses[?(@.name=='ml-gpu')].ready}") -eq "true")
 
-kubectl logs -f $podName
+# kubectl logs -f $podName
 
 Write-Information "Batch job completed. Downloading models and summaries from run."
 
@@ -221,7 +229,7 @@ do {
     Start-Sleep -s 5
 } until ((kubectl get jobs "ml-gpu-$runId" -o jsonpath="{.status.conditions[?(@.type=='Complete')].status}") -eq "True")
 
-kubectl delete job "ml-gpu-$runId"
+# kubectl delete job "ml-gpu-$runId"
 
-az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\models" --source "$runId/models"
-az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\summaries" --source "$runId/summaries"
+# az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\models" --source "$runId/models"
+# az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\summaries" --source "$runId/summaries"
