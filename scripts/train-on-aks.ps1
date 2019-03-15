@@ -132,7 +132,7 @@ az storage file upload-batch --account-name $storageAccountName --account-key $s
 
 if (-not ([string]::IsNullorEmpty($trainerConfigPath)))
 {
-    az storage file upload --account-name $storageAccountName --account-key $storageAccountKey --share-name $runId --sourch $trainerConfigPath
+    az storage file upload --account-name $storageAccountName --account-key $storageAccountKey --share-name $runId --source $trainerConfigPath
 }
 
 $aksExists = az aks list -g $resourceGroupName
