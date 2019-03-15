@@ -185,11 +185,11 @@ spec:
       containers:
       - name: ml-gpu
         image: '$containerImage'
-        args: ['--env=/$folderName/$environmentName', '--train', '--run-id=$runId', '/$folderName/trainer_config.yaml']
+        args: ['--env=/unity-volume/$environmentName', '--train', '--run-id=$runId', '/unity-volume/trainer_config.yaml']
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: azurefileshare
-          mountPath: '/$folderName'
+          mountPath: '/unity-volume'
         ports:
         - containerPort: 5005
           name: ml-agents
@@ -212,7 +212,7 @@ do {
     Start-Sleep -s 30
 } until ((kubectl get po $podName -o jsonpath="{.status.containerStatuses[?(@.name=='ml-gpu')].ready}") -eq "true")
 
-# kubectl logs -f $podName
+kubectl logs -f $podName
 
 Write-Information "Batch job completed. Downloading models and summaries from run."
 
