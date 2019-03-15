@@ -47,7 +47,7 @@ The following instructions guide you through the steps to create a Unity ML Agen
 1. Open a console window and ensure you are logged into Azure (run `az login`)
 1. Navigate to the root of the folder where you cloned this repo and run the command provided by the editor. Use the **ps1** command extension if you're using PowerShell or *sh** extension if you're using Bash. For example: 
 ~~~
-.\scripts\train-on-aks.ps1 -storageAccountName drunityml20180425 -environmentName 3dball -localVolume C:\code\ml-agents\unity-volume -runid run-a 
+.\scripts\train-on-aks.ps1 -storageAccountName unitymlagentsaksjobs -environmentName 3DBall-Linux -localVolume D:\Dev\Git\Unity-ML-Agents\Builds\3DBall-Linux -trainerConfigPath D:\Dev\Git\Unity-ML-Agents\config\trainer_config.yaml -runid pushblock-run-a 
 ~~~
 ![Train ML on Azure Screenshot](Screenshots/MLonAzureTrainingDialog.PNG)
 
@@ -69,7 +69,7 @@ If you want to monitor the status of your jobs on Kubernetes, use one of the fol
 - Creates an Azure Kubernetes Service (AKS) job to run the ML training using said Unity build, outputting to said file share
 - For parameters, see comment based help in [train-on-aks.ps1](./scripts/train-on-aks.ps1)
 
-### Bash Script
+### Bash Script (*not up to date*)
 `scripts/train-on-aks.sh` will do the following:
 - Ensures the existence of a target Azure resource group
 - Ensures the existence of a target Azure storage account and file share
@@ -77,8 +77,14 @@ If you want to monitor the status of your jobs on Kubernetes, use one of the fol
 - Creates an Azure Kubernetes Service (AKS) job to run the ML training using said Unity build, outputting to said file share
 - For parameters, see comment based help in [train-on-aks.sh](./scripts/train-on-aks.sh)
 
+**IMPORTANT: The current version of the Bash script does not feature all the latest changes. It is currently recommended to use PowerShell to benefit from all the options documented here.**
+
 ## Running Jobs in Parallel
-The scripts found in this repo are currently configured to run only one job at a time. To run multiple jobs in parallel, you need to increase the node count in the AKS cluster *and* use a larger Virtual Machine with more GPUs. **IMPORTANT: Running larger GPU-based VMs can incur significantly higher charges on your account. Check the [GPU VM Pricing](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) page for more info.** 
+The scripts found in this repo are currently configured to run only one job at a time. To run multiple jobs in parallel, you need to increase the node count in the AKS cluster *and* use a larger Virtual Machine with more GPUs. **IMPORTANT: Running larger GPU-based VMs can incur significantly higher charges on your account. Check the [GPU VM Pricing](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) page for more info.**
+
+Apply the following edits to the script [train-on-aks.ps1](./scripts/train-on-aks.ps1):
+1. Line 145: in the `az aks create` command, change the `node-count` value from 1 to the desired number of parallel jobs.
+1. On the same line, change the `node-vm-size` from "*Standard_NC6*" to the desired VM size, making sure to select an instance type with enough GPUs for the number of parallel jobs. See the [documentation here](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/sizes-gpu) for the available options.
 
 ## Azure Resources & Clean-up
 At this time there is no clean-up of assets created in Azure included with these scripts. This section provides an outline of these Azure assets and services to facilitate manual cleanup from within the [Azure Portal](https://portal.azure.com).
