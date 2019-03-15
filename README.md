@@ -1,5 +1,5 @@
 # Unity ML Agents Training on Azure with Containers
-This project contains a collection of resources and instructions to guide developers & designers for offloading the training of Unity ML Agents to the cloud using Docker containers, [Kubernetes](https://docs.microsoft.com/en-us/azure/aks/) and Microsoft Azure.
+This project contains a collection of resources and instructions to guide developers & designers for offloading the training of [Unity ML Agents](https://github.com/Unity-Technologies/ml-agents) to the cloud using Docker containers, [Kubernetes](https://docs.microsoft.com/en-us/azure/aks/) and [Microsoft Azure](https://azure.microsoft.com).
 
 Running your Machine Learning (ML) training in the cloud offers several benefits:
 
@@ -47,7 +47,7 @@ The following instructions guide you through the steps to create a Unity ML Agen
 1. Open a console window and ensure you are logged into Azure (run `az login`)
 1. Navigate to the root of the folder where you cloned this repo and run the command provided by the editor. Use the **ps1** command extension if you're using PowerShell or *sh** extension if you're using Bash. For example: 
 ~~~
-.\scripts\train-on-aks.ps1 -storageAccountName unitymlagentsaksjobs -environmentName 3DBall-Linux -localVolume D:\Dev\Git\Unity-ML-Agents\Builds\3DBall-Linux -trainerConfigPath D:\Dev\Git\Unity-ML-Agents\config\trainer_config.yaml -runid pushblock-run-a 
+.\scripts\train-on-aks.ps1 -storageAccountName unitymlagentsaksjobs -environmentName 3DBall-Linux -localVolume D:\Dev\Git\Unity-ML-Agents\Builds\3DBall-Linux -trainerConfigPath D:\Dev\Git\Unity-ML-Agents\config\trainer_config.yaml -runid 3dball-run-a 
 ~~~
 ![Train ML on Azure Screenshot](Screenshots/MLonAzureTrainingDialog.PNG)
 
@@ -55,7 +55,7 @@ Training will take a while but you're free to continue doing other work on your 
 
 ## Monitoring Your AKS Jobs
 
-If you want to monitor the status of your jobs on Kubernetes, use one of the following console commands:
+All output from the training job will be displayed in your console as the run executes. If you want to monitor the status of your jobs on Kubernetes, use one of the following console commands:
 - Check the overall status of all AKS jobs with `kubectl get jobs`
 - To check the output of a specific job deployed in a container, start with `kubectl get pods`. This will return the current jobs running on a pod. Copy that pod name, and you can view the logs from that pod with the command below: `kubectl logs <podid>`
 
@@ -92,4 +92,21 @@ At this time there is no clean-up of assets created in Azure included with these
 1. All the assets and services created by the script are located in two resource groups: `unityml` and `MC_unityml_ml-unity-aks_westus2`. You can delete both resource groups to completely remove any services & assets created by this script.
 1. The `unityml` resource group contains the storage account you have specified in the Unity editor. Using the Storage Explorer, you can see file share containers in this storage account. These contain all the Linux build files that were uploaded for training. Once you've received the brain files resulting from the training, you can delete these files.
 1. The `unityml` resource group also contains the Kubernetes service named `Kubernetes service`. AKS does not incur any extra cost in Azure since [AKS cluster management](https://azure.microsoft.com/pricing/details/kubernetes-service/) is free. You only pay for the virtual machines instances, storage and networking resources consumed by your Kubernetes cluster. 
-1. The resource group `MC_unityml_ml-unity-aks_westus2` contains the Virtual Machine (VM) used by the container service, including its associated disk and related networking services and assets. **IMPORTANT: Make sure to stop your Virtual Machine from this resource group to limit extra charges when you're not running any training jobs**. 
+1. The resource group `MC_unityml_ml-unity-aks_westus2` contains the Virtual Machine (VM) used by the container service, including its associated disk and related networking services and assets. **IMPORTANT: Make sure to stop your Virtual Machine from this resource group to limit extra charges when you're not running any training jobs**.
+
+## About the Dockerfile
+The Docker image used in these instructions has already been uploaded to [Docker Hub](https://hub.docker.com/) (i.e. the public repository for Docker images). This Docker image contains all the default content from [Unity ml-agents](https://github.com/Unity-Technologies/ml-agents), with GPU support enabled. If you want to create your own Docker image, or make changes to the files within ml-agents to support newer versions, this repo includes the GPU dockerfile that was uploaded to Docker Hub. Just replace the Dockerfile within the original ml-agents project with the Dockerfile provided here.
+ 
+If you want to use your new image within this project, you’ll need to upload it to Docker Hub. This is essential since if you just build the new image locally, it will only live on your own computer, and Kubernetes won’t be able to pull that image.
+
+To accomplish this, set up an account on [Docker Hub](https://hub.docker.com/) and then in your terminal:
+~~~
+docker login
+docker build . -t <username>/<your-tag> (for example cnadolny/ml-gpu-agents)
+docker push <username>/<your-tag>
+~~~
+ 
+Then pass that new image into the training script with the `containerImage` parameter, for example:
+~~~
+.\scripts\train-on-aks.ps1 -storageAccountName mystorageforunity -environmentName PushBlock-Linux -localVolume D:\Dev\Git\Unity-ML-Agents\Builds\PushBlock-Linux -trainerConfigPath D:\Dev\Git\Unity-ML-Agents\config\trainer_config.yaml -runid pushblock-run-a -containerImage <username>/<your-tag>
+~~~
