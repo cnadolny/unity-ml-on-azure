@@ -229,7 +229,7 @@ do {
     Start-Sleep -s 5
 } until ((kubectl get jobs "ml-gpu-$runId" -o jsonpath="{.status.conditions[?(@.type=='Complete')].status}") -eq "True")
 
-# kubectl delete job "ml-gpu-$runId"
+kubectl delete job "ml-gpu-$runId"
 
-# az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\models" --source "$runId/models"
-# az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\summaries" --source "$runId/summaries"
+az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\models" --source "$runId/models"
+az storage file download-batch --account-name $storageAccountName --account-key $storageAccountKey --destination "$localVolume\summaries" --source "$runId/summaries"
