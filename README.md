@@ -37,7 +37,7 @@ Running your Machine Learning (ML) training in the cloud offers several benefits
 The following instructions guide you through the steps to create a Unity ML Agents training job in an Azure container using AKS:
 1. Make sure you have all the **Prerequisites** listed above and that you've completed the steps listed in **Before you Begin** once on your machine.
 1. Copy `Editor/AzureDeploymentWindow-AKS.cs` from this repo into your project's Editor directory.1. Build your Unity project for Linux x86_64 as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md)
-1. From the Unity editor main menu, select the `ML on Azure > Train` command to open the popup dialog of the same name.
+1. From the Unity editor main menu, select the `ML on Azure > Train with AKS` command to open the popup dialog of the same name.
 1. Optionally set the **Storage Account Name** where build files will be uploaded in Azure; a default name is provided based on the current time, but is not guaranteed to be unique. *Letters must be lowercase*.
 1. Optionally set the **Job Name** (known as the Run ID in ML Agents); a default name is provided but if you're planning on running multiple jobs in parallel, each job should have a unique name to differentiate it from the other jobs. *Letters must be lowercase*.
 1. Click `Choose build output` and navigate to your x86_64 build output.
