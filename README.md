@@ -36,10 +36,12 @@ Running your Machine Learning (ML) training in the cloud offers several benefits
 ## Quickstart
 The following instructions guide you through the steps to create a Unity ML Agents training job in an Azure container using AKS:
 1. Make sure you have all the **Prerequisites** listed above and that you've completed the steps listed in **Before you Begin** once on your machine.
-1. Copy `Editor/AzureDeploymentWindow-AKS.cs` from this repo into your project's Editor directory.1. Build your Unity project for Linux x86_64 as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md)
+1. Copy `Editor/AzureDeploymentWindow-AKS.cs` from this repo into your project's Editor directory.
+1. Build your Unity project for Linux x86_64 as described [here](https://github.com/Unity-Technologies/ml-agents/blob/master/docs/Using-Docker.md). Note that **Headless Mode** is now called **Server Build** in Unity 2018 and higher. 
 1. From the Unity editor main menu, select the `ML on Azure > Train with AKS` command to open the popup dialog of the same name.
 1. Optionally set the **Storage Account Name** where build files will be uploaded in Azure; a default name is provided based on the current time, but is not guaranteed to be unique. *Letters must be lowercase*.
 1. Optionally set the **Job Name** (known as the Run ID in ML Agents); a default name is provided but if you're planning on running multiple jobs in parallel, each job should have a unique name to differentiate it from the other jobs. *Letters must be lowercase*.
+1. Edit the `Trainer Config File` text field to point to the file `trainer_config.yaml` on your local machine. This file can be found in the `/config` folder in the main Unity ML Agents repo.
 1. Click `Choose build output` and navigate to your x86_64 build output.
 1. Click the `Generate Deployment Command` button; currently the editor only displays what you should run at the command line. Select the full command and copy it to the clipboard.
 1. Open a console window and ensure you are logged into Azure (run `az login`)
@@ -57,7 +59,7 @@ If you want to monitor the status of your jobs on Kubernetes, use one of the fol
 - Check the overall status of all AKS jobs with `kubectl get jobs`
 - To check the output of a specific job deployed in a container, start with `kubectl get pods`. This will return the current jobs running on a pod. Copy that pod name, and you can view the logs from that pod with the command below: `kubectl logs <podid>`
 
-## Details
+## Technical Details: What does the script do?
 
 ### PowerShell Script
 `scripts/train-on-aks.ps1` will do the following:
@@ -75,10 +77,13 @@ If you want to monitor the status of your jobs on Kubernetes, use one of the fol
 - Creates an Azure Kubernetes Service (AKS) job to run the ML training using said Unity build, outputting to said file share
 - For parameters, see comment based help in [train-on-aks.sh](./scripts/train-on-aks.sh)
 
+## Running Jobs in Parallel
+The scripts found in this repo are currently configured to run only one job at a time. To run multiple jobs in parallel, you need to increase the node count in the AKS cluster *and* use a larger Virtual Machine with more GPUs. **IMPORTANT: Running larger GPU-based VMs can incur significantly higher charges on your account. Check the [GPU VM Pricing](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/linux/) page for more info.** 
+
 ## Azure Resources & Clean-up
 At this time there is no clean-up of assets created in Azure included with these scripts. This section provides an outline of these Azure assets and services to facilitate manual cleanup from within the [Azure Portal](https://portal.azure.com).
 
-1. All the assets and services created by the script are located in two resource groups: `unityml` and `MC_unityml_ml-unity-aks_westus2`.
+1. All the assets and services created by the script are located in two resource groups: `unityml` and `MC_unityml_ml-unity-aks_westus2`. You can delete both resource groups to completely remove any services & assets created by this script.
 1. The `unityml` resource group contains the storage account you have specified in the Unity editor. Using the Storage Explorer, you can see file share containers in this storage account. These contain all the Linux build files that were uploaded for training. Once you've received the brain files resulting from the training, you can delete these files.
-1. The `unityml` resource group also contains the Kubernetes service named `Kubernetes service`. AKS does not incur any extra cost in Azure since [AKS cluster management](https://azure.microsoft.com/pricing/details/kubernetes-service/) is free. You only pay for the virtual machines instances, storage and networking resources consumed by your Kubernetes cluster.
-1. The resource group `MC_unityml_ml-unity-aks_westus2` contains the Virtual Machine (VM) used by the container service, including its associated disk and related networking services and assets. 
+1. The `unityml` resource group also contains the Kubernetes service named `Kubernetes service`. AKS does not incur any extra cost in Azure since [AKS cluster management](https://azure.microsoft.com/pricing/details/kubernetes-service/) is free. You only pay for the virtual machines instances, storage and networking resources consumed by your Kubernetes cluster. 
+1. The resource group `MC_unityml_ml-unity-aks_westus2` contains the Virtual Machine (VM) used by the container service, including its associated disk and related networking services and assets. **IMPORTANT: Make sure to stop your Virtual Machine from this resource group to limit extra charges when you're not running any training jobs**. 
